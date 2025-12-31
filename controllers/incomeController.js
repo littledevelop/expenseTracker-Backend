@@ -4,10 +4,10 @@ import IncomeModel from '../models/incomeModel.js';
 // Create a new income entry
 const addIncome = async (req, res) => {
     const userId = req.user?.id;
-    console.log("User ID from auth middleware:", userId);
+    // console.log("User ID from auth middleware:", userId);
 
     const {title,amount,type,category,date,description}=req.body;
-    console.log("Request body:", req.body);
+    // console.log("Request body:", req.body);
     const parsedAmount = Number(amount);
     // const parsedAmount = parseFloat(amount);
   try {

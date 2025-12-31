@@ -7,7 +7,7 @@ const userRouter = express.Router();
 userRouter.post("/register", register);
 userRouter.post("/login", login);
 userRouter.post("/forgotPassword",forgotPassword);
-userRouter.put("/resetPassword",resetPassword);
+userRouter.put("/resetPassword/:token",resetPassword);
 // userRouter.post('/user/add-income', authMiddleware, addIncome);
 
 export default userRouter;
