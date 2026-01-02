@@ -72,7 +72,7 @@ const login = async (req, res) => {
     }
 
     const user = await userModel.findOne({ email });
-console.log(user)
+    console.log(user);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -138,16 +138,18 @@ const forgotPassword = async (req, res) => {
       console.log("Reset Link:", resetLink);
 
       const transporter = nodemailer.createTransport({
-        service: "gmail", // or use SMTP host/port
+        host: "smtp-relay.brevo.com",
+        port: 587,
+        secure: false,
         auth: {
-          user: process.env.EMAIL_USER, // your email address
-          pass: process.env.EMAIL_PASS, // app password (not raw Gmail password!)
+          user: process.env.BREVO_USER,
+          pass: process.env.BREVO_PASS, // your Brevo SMTP password
         },
       });
 
       // Send email
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"Expense Tracker" <${process.env.BREVO_USER}>`,
         to: user.email,
         subject: "Password Reset Request",
         html: `
