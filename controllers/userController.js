@@ -134,8 +134,8 @@ const forgotPassword = async (req, res) => {
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: "15m",
       });
-      // const resetLink = `https://expense-tracker-frontend-chi-flax.vercel.app/resetPassword/${token}`;
-      const resetLink = `http://localhost:3000/resetPassword/${token}`;
+      const resetLink = `https://expense-tracker-frontend-chi-flax.vercel.app/resetPassword/${token}`;
+      // const resetLink = `http://localhost:3000/resetPassword/${token}`;
       console.log("Reset Link:", resetLink);
 
       const transporter = nodemailer.createTransport({
