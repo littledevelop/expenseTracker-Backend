@@ -134,7 +134,8 @@ const forgotPassword = async (req, res) => {
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: "15m",
       });
-      const resetLink = `https://expense-tracker-frontend-chi-flax.vercel.app/resetPassword/${token}`;
+      // const resetLink = `https://expense-tracker-frontend-chi-flax.vercel.app/resetPassword/${token}`;
+      const resetLink = `http://localhost:3000/resetPassword/${token}`;
       console.log("Reset Link:", resetLink);
 
       const transporter = nodemailer.createTransport({
@@ -145,8 +146,18 @@ const forgotPassword = async (req, res) => {
           user: process.env.BREVO_USER,
           pass: process.env.BREVO_PASS, // your Brevo SMTP password
         },
+        connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
       });
-console.log(user.email)
+
+      transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP ERROR:", error);
+  } else {
+    console.log("SMTP READY");
+  }
+});
       // Send email
       await transporter.sendMail({
         from: `"Expense Tracker" <${process.env.BREVO_USER}>`,
