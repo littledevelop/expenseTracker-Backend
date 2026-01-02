@@ -2,6 +2,7 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import axios from 'axios';
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -120,56 +121,75 @@ const login = async (req, res) => {
   }
 };
 
+const sendResetPasswordEmail = async (toEmail, resetLink) => {
+  try {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: process.env.FROM_NAME,
+          email: process.env.FROM_EMAIL,
+        },
+        to: [{ email: toEmail }],
+        subject: "Password Reset Request",
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif;">
+            <h2>Password Reset</h2>
+            <p>You requested to reset your password.</p>
+            <p>
+              <a href="${resetLink}"
+                 style="background:#2563eb;color:#fff;padding:12px 18px;
+                        text-decoration:none;border-radius:5px;">
+                Reset Password
+              </a>
+            </p>
+            <p>This link is valid for 15 minutes.</p>
+            <p>If you didn’t request this, please ignore.</p>
+          </div>
+        `,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        timeout: 10000,
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Brevo Email Error:",
+      error.response?.data || error.message
+    );
+    throw new Error("Email sending failed");
+  }
+};
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email)
+
+    if (!email) {
       return res
         .status(400)
         .json({ success: false, message: "Email should not be blank" });
+    }
 
     const user = await userModel.findOne({ email });
 
     if (user) {
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "15m",
-      });
-      const resetLink = `https://expense-tracker-frontend-chi-flax.vercel.app/resetPassword/${token}`;
-      // const resetLink = `http://localhost:3000/resetPassword/${token}`;
-      console.log("Reset Link:", resetLink);
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" }
+      );
 
-      const transporter = nodemailer.createTransport({
-        host: "smtp-relay.brevo.com",
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.BREVO_USER,
-          pass: process.env.BREVO_PASS, // your Brevo SMTP password
-        },
-        connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-      });
+      const resetLink = `${process.env.FRONTEND_URL}/resetPassword/${token}`;
 
-      transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP ERROR:", error);
-  } else {
-    console.log("SMTP READY");
-  }
-});
-      // Send email
-      await transporter.sendMail({
-        from: `"Expense Tracker" <${process.env.BREVO_USER}>`,
-        to: user.email,
-        subject: "Password Reset Request",
-        html: `
-        <p>Hello ${user.email},</p>
-        <p>You requested a password reset.</p>
-        <p>Click the link below to reset your password (valid for 15 minutes):</p>
-        <a href="${resetLink}">${resetLink}</a>
-      `,
-      });
+      console.log("Reset Link:", resetLink); // dev only
+
+      await sendResetPasswordEmail(user.email, resetLink);
     }
 
     res.json({
@@ -177,10 +197,11 @@ const forgotPassword = async (req, res) => {
       message: "If this email exists, a reset link has been sent.",
     });
   } catch (error) {
-    console.log(error);
+    console.error("Forgot password error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 const resetPassword = async (req, res) => {
   try {
