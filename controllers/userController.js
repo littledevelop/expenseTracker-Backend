@@ -146,7 +146,7 @@ const forgotPassword = async (req, res) => {
           pass: process.env.BREVO_PASS, // your Brevo SMTP password
         },
       });
-
+console.log(user.email)
       // Send email
       await transporter.sendMail({
         from: `"Expense Tracker" <${process.env.BREVO_USER}>`,
